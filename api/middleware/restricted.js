@@ -1,21 +1,21 @@
+const { JWT_SECRET } = require('../secrets/index') // use this secret!
 const jwt = require('jsonwebtoken')
-const { TOKEN_SECRET } = require('../secrets')
 
 module.exports = (req, res, next) => {
   const token = req.headers.authorization
-
   if (token) {
-    jwt.verify(token, TOKEN_SECRET, (err, decoded) => {
-      if (err) {
-        res.status(401).json({ message: 'token invalid' })
+    jwt.verify(token, JWT_SECRET, (error, decoded) => {
+      if (error) {
+        next({ status: 401, message: 'Token invalid' })
       } else {
-        req.decoded = decoded
+        req.decodedJwt = decoded
         next()
       }
     })
   } else {
-    res.status(407).json({ message: 'token required' })
+    next({ status: 401, message: 'Token required' })
   }
+
   /*
     IMPLEMENT
     1- On valid token in the Authorization header, call next.
