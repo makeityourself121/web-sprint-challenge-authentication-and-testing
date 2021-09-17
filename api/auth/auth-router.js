@@ -6,6 +6,7 @@ const tokenBuilder = require('./token-builder')
 
 router.post('/register', validateUser, usernameIsUnique, (req, res) => {
   const { username, password } = req.body
+
   const rounds = process.env.BCRYPT_ROUNDS || 8
   const hash = bcrypt.hashSync(password, rounds)
 
