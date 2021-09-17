@@ -1,44 +1,30 @@
-const db = require('../../data/dbConfig')
-const bcrypt = require('bcryptjs')
+const Users = require('../users/users-model')
 
-const checkPayload = async (req, res, next) => {
-  if (!req.body.username || !req.body.password) {
-    next({ status: 401, message: 'username and password required' })
+module.exports = {
+  validateUser,
+  usernameIsUnique,
+}
+
+function validateUser(req, res, next) {
+  const { username, password } = req.body
+  if (!username || !password) {
+    res.status(422).json({ message: 'username and password are required' })
   } else {
     next()
   }
 }
 
-const usernameExists = async (req, res, next) => {
-  const exists = await db('users')
-    .select('username')
-    .where('username', req.body.username)
-    .first()
-  if (exists) {
-    next({ status: 401, message: 'username taken' })
-  } else {
-    next()
-  }
+function usernameIsUnique(req, res, next) {
+  const { username } = req.body
+  Users.findBy({ username })
+    .then(([user]) => {
+      if (user) {
+        res.status(422).json({ message: 'username taken' })
+      } else {
+        next()
+      }
+    })
+    .catch((err) => {
+      res.status(500).json(err.message)
+    })
 }
-
-const checkUsername = async (req, res, next) => {
-  try {
-    const exists = await db('users')
-      .select('username', 'password')
-      .where('username', req.body.username)
-      .first()
-
-    if (!exists) {
-      next({ status: 401, message: 'invalid credentials' })
-    } else if (bcrypt.compareSync(req.body.password, exists.password)) {
-      req.username = exists
-      next()
-    } else {
-      next({ status: 401, message: 'invalid credentials' })
-    }
-  } catch (error) {
-    next(error)
-  }
-}
-
-module.exports = { usernameExists, checkUsername, checkPayload }
